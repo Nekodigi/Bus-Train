@@ -1,0 +1,44 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  /* font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+  Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif; */
+  font-family: "Noto Sans JP", sans-serif;
+  white-space: pre;
+}
+
+.iconContainingText{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  
+}
+
+.MuiSvgIcon-root{
+  font-size: inherit;
+}
+
+.MuiChip-sizeMedium{
+  font-size:inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: light) {
+  html {
+    color-scheme: light;
+  }
+  body {
+    color: black;
+    background: #FFFFFF;
+  }
+}
+
