@@ -12,7 +12,10 @@ exports.getAllPaths = async () => {
 
 exports.updatePaths = async () => {
     //console.log(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0').get()).data().lastUpdate)));
-    if(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0').get()).data().lastUpdate)) < 1)return;
+    if((await db.collection('paths').doc('0').get()).data() !== undefined){
+        if(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0').get()).data().lastUpdate)) < 1)return;
+    }
+    
     let paths = await train.getAllPaths();
     paths = paths.concat(await bus.getAllPaths());
     sortPaths(paths);
