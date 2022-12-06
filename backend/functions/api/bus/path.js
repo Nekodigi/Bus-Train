@@ -6,6 +6,7 @@ const { db } = require("../../infrastructure/firestore/firestore");
 const { updateAllSchedules } = require("../train/train");
 const { getStops } = require('./route');
 const { baseUrl } = require('./const');
+const { getHash } = require('../../utils/hash');
 
 const getPaths = async ([stop, dest]) => {
   const body = await (await fetch(`${baseUrl}/stop/${dest.from}?destination=${dest.to}`)).text();
@@ -23,7 +24,7 @@ const connectStation = async(res, dest) => {
   let departureDate =nextToDate(arrivalDate, departures);
   let min = minDiff(departureDate, arrivalDate);
   let danger = calcDangerByDistM(min, dest.distMStation);
-  return [{id:dest.station, name:station.name, date:departureDate, min:min, danger:danger}, station.priority];
+  return [{id:dest.station, name:station.name, date:departureDate, min, danger, refURL:station.refURL}, station.priority];
 }
 //#endregion
 
@@ -97,7 +98,8 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
 
   let from = {id:dest.from, name:stop.name, date:fromDate, min:min1, danger:danger1}
   
-  res = {type:"bus", from, route, num, valid, detailUrl, delay:Math.max(0, status.delay), lastUpdate:new Date()};//status
+  let hash = getHash(from.id+from.date);
+  res = {type:"bus", from, route, num, valid, delay:Math.max(0, status.delay), hash, lastUpdate:new Date()};//status
 
   if(!valid)return res;
   //post-processing
@@ -111,7 +113,7 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
     let danger2 = 0;
     if(status.delay > 5)danger2=1;
     midDate.setMinutes(midDate.getMinutes()+min2, 0, 0);
-    res.mid = {id:dest.to, name:mid_.name, date:midDate, min:min2, danger:danger2};
+    res.mid = {id:dest.to, name:mid_.name, date:midDate, min:min2, danger:danger2, refURL:baseUrl+detailUrl};
 
     [res.to, res.priority] = await connectStation(res, dest);
     res.danger = Math.max(res.from.danger, res.mid.danger, res.to.danger);

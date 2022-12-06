@@ -14,6 +14,16 @@ export default function PathCards(){
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app); //no need for app if auth is not required
 
+  const formatDates = (path) => {
+    if(path.type === "bus"){
+      path.from.date = toDate(path.from.date);
+      path.mid.date = toDate(path.mid.date);
+    }
+    path.to.date = toDate(path.to.date);
+    path.lastUpdate = toDate(path.lastUpdate);
+    return path;
+  }
+
   useEffect(() => {
     if(calledOnce.current)return;
     calledOnce.current = true;
@@ -22,21 +32,31 @@ export default function PathCards(){
     const q = query(collection(db, "paths"));
     const change = onSnapshot(q, (snapshot) => {
       setPaths([]);
+
+      let paths_ = localStorage.getItem("paths");
+      if(paths_ === null)paths_ = {};
+      else paths_ = JSON.parse(paths_);
+      paths_ = Object.keys(paths_).map(key => formatDates(paths_[key]));//format and convert to array
+      paths_.forEach(path => path.kept = true);
+      
+      paths_.forEach(path => setPaths((prevPaths) => [...prevPaths, path ]));
+
       snapshot.forEach((doc) => {
         let path = doc.data();
+        path = formatDates(path);
 
-        if(path.type === "bus"){
-          path.from.date = toDate(path.from.date);
-          path.mid.date = toDate(path.mid.date);
-        }
-        path.to.date = toDate(path.to.date);
-        path.lastUpdate = toDate(path.lastUpdate);
-
-        setPaths((prevPaths) => [...prevPaths, path ]);
+        let samePath = paths_.filter(path_ => path_.hash === path.hash);//length = 0 or 1
+        if(samePath.length === 1)Object.assign(samePath, path);
+        else paths_.push(path);
+        
       });
+      console.log(paths_);
+      setPaths(paths_);
+      //setPaths((prevPaths) => [...prevPaths, path ]);
     });
     return;
   }, [db])
+
 
   return (
     <div>

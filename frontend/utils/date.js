@@ -5,8 +5,9 @@ module.exports.tohhmm = (date) => {
     return hhmm;
 }
 
-module.exports.toDate = (TimeStamp) => {
-    return new Date(TimeStamp.seconds*1000);
+module.exports.toDate = (raw) => {//should varidate for already converted data
+    if(raw.seconds === undefined)return new Date(raw);
+    else return new Date(raw.seconds*1000);
 }
 
 module.exports.minDiff = (a, b) => Math.floor((a-b)/(1000*60));

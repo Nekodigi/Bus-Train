@@ -24,9 +24,9 @@ exports.updateAllSchedules = async(stop) => {
     //should change date
     const now = new Date();
     const dateStr = `${now.getFullYear()}${now.getMonth().toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
-    const body = await (await fetch(`https://mydia.jr-odekake.net/cgi-bin/mydia.cgi?MODE=11&FUNC=0&EKI=${encodeURIComponent(stop.JRName)}&SENK=%E5%B1%B1%E9%99%BD%E6%9C%AC%E7%B7%9A&DIR=${encodeURIComponent(stop.dir1)}&DDIV=&CDAY=&DITD=${encodeURIComponent(stop.JRFrom+","+stop.JRTo)}&COMPANY_CODE=4&DATE=${dateStr}`)).text();
-    console.log(dateStr, stop.JRName, stop.dir1);
-    console.log(`https://mydia.jr-odekake.net/cgi-bin/mydia.cgi?MODE=11&FUNC=0&EKI=${encodeURIComponent(stop.JRName)}&SENK=%E5%B1%B1%E9%99%BD%E6%9C%AC%E7%B7%9A&DIR=${encodeURIComponent(stop.dir1)}&DDIV=&CDAY=&DITD=${encodeURIComponent(stop.JRFrom+","+stop.JRTo)}&COMPANY_CODE=4&DATE=20221202`);
+    let url = `https://mydia.jr-odekake.net/cgi-bin/mydia.cgi?MODE=11&FUNC=0&EKI=${encodeURIComponent(stop.JRName)}&SENK=%E5%B1%B1%E9%99%BD%E6%9C%AC%E7%B7%9A&DIR=${encodeURIComponent(stop.dir1)}&DDIV=&CDAY=&DITD=${encodeURIComponent(stop.JRFrom+","+stop.JRTo)}&COMPANY_CODE=4`;
+    const body = await (await fetch(url)).text();
+    //console.log(dateStr, stop.JRName, stop.dir1);
     const $ = cheerio.load(body);
     const table = $('#weekday > tbody');
     let trs = table.children();
@@ -44,7 +44,7 @@ exports.updateAllSchedules = async(stop) => {
       });
     });
     
-  
+    await db.collection('train').doc(stop.id).update("refURL", url);
     await db.collection('train').doc(stop.id).update("departures", dates);
     return dates;
   }
