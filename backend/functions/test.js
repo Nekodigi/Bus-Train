@@ -5,6 +5,7 @@ const train = require('./api/train/train');
 const { db } = require('./infrastructure/firestore/firestore');
 const { nextToDate } = require('./utils/time/date');
 const { sortPaths, getAllPaths, updatePaths } = require('./api/path/path');
+const { getStops } = require('./api/bus/route');
 
 const f = async () => {
   // let stopObj = await bus.getStopObj({id:'10000842'}, {id:'36_3', name:'徳山駅前', station:'Tokuyama'});
@@ -14,9 +15,8 @@ const f = async () => {
   // let paths = await updatePaths();
   // console.log(paths[0].to.date.toLocaleString());
 
-  // let paths = await train.getAllPaths();
-  // console.log(paths);
-  await train.updateAllSchedules();
+
+
   // let paths = await train.getAllPaths();
   // console.log(paths[1].to.date.getHours());
 
@@ -249,10 +249,10 @@ const f = async () => {
     }
   ]
 
-  // await Promise.all((await db.collection('paths').get()).docs.map(doc => doc.ref.delete()))
-  // await Promise.all(tempPath.map(async (path, i) => {
-  //     db.collection('paths').doc(i+"").set(path);
-  // }));
+  await Promise.all((await db.collection('paths').get()).docs.map(doc => doc.ref.delete()))
+  await Promise.all(tempPath.map(async (path, i) => {
+      db.collection('paths').doc(i+"").set(path);
+  }));
   
 }
 f();

@@ -105,7 +105,7 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
   //post-processing
   
   if(detail){
-    let stopObjs = await getStops(detailUrl, dest);
+    let stopObjs = await getStops(detailUrl);
     let mid_ = stopObjs.find(stopObj => stopObj.name === dest.name);
     let midDateRaw = hhmmToDate(mid_.time);
     let midDate = new Date(fromDate);

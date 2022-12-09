@@ -11,6 +11,10 @@ module.exports.sameDay = (a, b) => {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() == b.getFullYear();
 }
 
+module.exports.midDate = (a, b) => {
+  return new Date((a.getTime() + b.getTime())/2)
+}
+
 module.exports.hhmmToDate = (hhmm) => {
   let date = new Date();
   date.setHours(Number(hhmm.split(":")[0]), Number(hhmm.split(":")[1]), 0, 0);
