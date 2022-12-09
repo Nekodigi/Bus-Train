@@ -96,29 +96,47 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
   let danger1 = calcDangerByDistM(min1, stop.distMBase, false);
   fromDate.setMinutes(fromDate.getMinutes()+Math.max(status.delay, 0), 0, 0);
 
-  let from = {id:dest.from, name:stop.name, date:fromDate, min:min1, danger:danger1}
+  let from = {id:dest.from, name:stop.name, scheduledDate:fromDateRaw, date:fromDate, min:min1, danger:danger1}
   
-  let hash = getHash(from.id+from.date);
+  let hash = getHash(from.id+fromDateRaw);//
   res = {type:"bus", from, route, num, valid, delay:Math.max(0, status.delay), hash, lastUpdate:new Date()};//status
 
   if(!valid)return res;
   //post-processing
   
   if(detail){
-    let stopObjs = await getStops(detailUrl);
+    let stopObjs = (await getStops(detailUrl)).stopObjs;
     let mid_ = stopObjs.find(stopObj => stopObj.name === dest.name);
-    let midDateRaw = hhmmToDate(mid_.time);
-    let midDate = new Date(fromDate);
+    let midDateRaw = mid_.time;
+    let midDate = new Date(midDateRaw);//delay already applied
     let min2 = minDiff(midDateRaw, fromDateRaw);
     let danger2 = 0;
     if(status.delay > 5)danger2=1;
-    midDate.setMinutes(midDate.getMinutes()+min2, 0, 0);
-    res.mid = {id:dest.to, name:mid_.name, date:midDate, min:min2, danger:danger2, refURL:baseUrl+detailUrl};
+    midDate.setMinutes(midDate.getMinutes()+res.delay, 0, 0);
+    res.mid = {id:dest.to, name:mid_.name, scheduledDate:midDateRaw , date:midDate, min:min2, danger:danger2, refURL:baseUrl+detailUrl};
 
     [res.to, res.priority] = await connectStation(res, dest);
     res.danger = Math.max(res.from.danger, res.mid.danger, res.to.danger);
   }
 
   return res;
+}
+
+exports.updateInvalidPath = async (path) => {//update path data which is already departure (for delay)
+  if(path.type === "bus" && path.valid === false){
+    //
+    console.log(path.from.name, tsToDate(path.from.date).toLocaleTimeString());
+
+    let res = await getStops(path.mid.refURL.substring(16));
+    path.delay = res.delay;
+    let midDate = tsToDate(path.mid.scheduledDate);
+    midDate.setMinutes(midDate.getMinutes()+path.delay);
+    path.mid.date = midDate;
+    let toMin = minDiff(tsToDate(path.to.date), midDate);
+    path.to.min = toMin;
+    console.log(toMin);
+    console.log(path.delay);
+  }
+  return path;
 }
 //#endregion

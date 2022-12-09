@@ -15,7 +15,7 @@ exports.getPaths = async (stop) => {
     let min = minDiff(departure,now);
     let danger = calcDangerByDistM(min, stop.distMBase, false);
     let hash = getHash(stop.id+departure);
-    res.push({type:"walk", from: {id:"base", name:"徳山高専", date:now}, to:{id:stop.id, name:stop.name, date:departure, min, danger, refURL:stop.refURL}, delay:0, priority:stop.priority, danger, hash, lastUpdate:new Date()});
+    res.push({type:"walk", from: {id:"base", name:"徳山高専", date:now}, to:{id:stop.id, name:stop.name, date:departure, min, danger, refURL:stop.refURL}, delay:0, priority:stop.priority, danger, valid:true, hash, lastUpdate:new Date()});
 
 
     let departure_ = new Date(departure);
@@ -26,6 +26,6 @@ exports.getPaths = async (stop) => {
     min = minDiff(departure2,now);
     danger = calcDangerByDistM(min, stop.distMBase, false);
     hash = getHash(stop.id+departure2);
-    res.push({type:"walk", from: {id:"base", name:"徳山高専", date:now}, to:{id:stop.id, name:stop.name, date:departure2, min, danger, refURL:stop.refURL}, delay:0, priority:stop.priority, danger, hash, lastUpdate:new Date()});
+    res.push({type:"walk", from: {id:"base", name:"徳山高専", date:now}, to:{id:stop.id, name:stop.name, date:departure2, min, danger, refURL:stop.refURL}, delay:0, priority:stop.priority, danger, valid:true, hash, lastUpdate:new Date()});
     return res;
 }

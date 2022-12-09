@@ -26,17 +26,17 @@ const getStops = async (url) => {
     if($(stop).find(".bus_now").length === 1)currentStop=i;
     
   });
-  console.log(currentStop);//0 2  
+  //console.log(currentStop);//0 2  
   const lowStop = Math.ceil(currentStop/2);
-  console.log(lowStop);
+  //console.log(lowStop);
   let timeShouldBe = currentStop === -1 ? undefined : currentStop%2 === 0 ? stopObjs[lowStop].time : midDate(stopObjs[lowStop].time, stopObjs[lowStop+1].time);
   let delay = currentStop === -1 ? undefined : Math.round((new Date() - timeShouldBe)/(60*1000));
-  console.log(stopObjs);
-  console.log(timeShouldBe);
-  console.log(delay);
+  // console.log(stopObjs);
+  // console.log(timeShouldBe);
+  // console.log(delay);
     
 
   
-  return stopObjs;
+  return {stopObjs, delay};
 }
 exports.getStops = getStops;

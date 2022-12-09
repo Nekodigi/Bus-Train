@@ -7,6 +7,10 @@ module.exports.calcDangerByDistM = (min, distM, isBus=true) => {
   else return 0;
 }
 
+exports.addMin = (a, min) => {//to exact min 0 sec.ms..
+  return a.setMinutes(a.getMinutes()+min, 0, 0);
+}
+
 module.exports.sameDay = (a, b) => {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() == b.getFullYear();
 }

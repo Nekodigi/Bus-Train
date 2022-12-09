@@ -7,13 +7,12 @@ const { nextToDate } = require('./utils/time/date');
 const { sortPaths, getAllPaths, updatePaths } = require('./api/path/path');
 const { getStops } = require('./api/bus/route');
 
-const f = async () => {
-  // let stopObj = await bus.getStopObj({id:'10000842'}, {id:'36_3', name:'徳山駅前', station:'Tokuyama'});
-  // console.log(stopObj);
-  //let stopObj = await train.updateSchedule({JRName:'徳山', id:'Tokuyama'});//
-  //let stopObj = await train.updateSchedule({JRName:'下松（山口県）', id:'Kudamatsu'});
-  // let paths = await updatePaths();
-  // console.log(paths[0].to.date.toLocaleString());
+const f = async () => {//jjust deleted locally
+  //const paths = await updatePaths();
+  console.log((await db.doc("paths/0").get()).data());
+  //console.log(paths);
+  //const stops = await getStops("/trip/28_246048?seq=24#stay");
+  //console.log(stops);
 
 
 
@@ -249,10 +248,10 @@ const f = async () => {
     }
   ]
 
-  await Promise.all((await db.collection('paths').get()).docs.map(doc => doc.ref.delete()))
-  await Promise.all(tempPath.map(async (path, i) => {
-      db.collection('paths').doc(i+"").set(path);
-  }));
+  // await Promise.all((await db.collection('paths').get()).docs.map(doc => doc.ref.delete()))
+  // await Promise.all(tempPath.map(async (path, i) => {
+  //     db.collection('paths').doc(i+"").set(path);
+  // }));
   
 }
 f();
