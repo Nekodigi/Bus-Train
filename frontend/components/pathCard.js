@@ -13,10 +13,11 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import { fromDanger, stateFromDanger } from '../utils/color';
 import { minDiff, toDate, tohhmm } from '../utils/date';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function PathCard({path}){
   const [kept, setKept] = useState(path.kept);
+  const calledOnce = useRef(false);
 
   const GenStep = (stop, path) => {
     return ([<Step key={0}><Typography fontWeight={700} color={fromDanger(stop.danger)}>{stop.min} min</Typography></Step>,
@@ -28,7 +29,7 @@ export default function PathCard({path}){
   }
 
   const GenChip = (stop) => {
-    return <Chip label={stop.name} color={stateFromDanger(stop.danger)}  />
+    return <Chip key={stop.id} label={stop.name} color={stateFromDanger(stop.danger)}  />
   }
 
   const keepPath = (event) => {
@@ -38,7 +39,7 @@ export default function PathCard({path}){
 
     setKept(event.target.checked);
     path.kept = event.target.checked;
-    console.log(paths);
+    //console.log(paths);
     if(event.target.checked){
       paths[path.hash] = path;
     }else{
@@ -46,12 +47,8 @@ export default function PathCard({path}){
     }
     
     localStorage.setItem("paths", JSON.stringify(paths));
-    console.log(paths);
+    //console.log(paths);
   }
-  
-
-  if(path.type === "bus")path.from.min = minDiff(path.from.date, new Date());
-  else path.to.min = minDiff(path.to.date, new Date());
   
 
   return (

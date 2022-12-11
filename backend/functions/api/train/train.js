@@ -1,5 +1,6 @@
 
 const { db } = require('../../infrastructure/firestore/firestore');
+const { tsToDate } = require('../../utils/time/date');
 const { getPaths } = require('./path');
 const { updateSchedule, updateAllSchedules } = require('./schedule');
 
@@ -13,6 +14,7 @@ exports.getAllPaths = async () => {
   for(stop of stops){
     if(stop.distMBase===-1)continue;
     
+    stop.departures = stop.departures.map(departure => tsToDate(departure))
     let paths_ = await getPaths(stop);
     paths = paths.concat(paths_);
   }

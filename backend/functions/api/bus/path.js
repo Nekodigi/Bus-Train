@@ -1,12 +1,12 @@
 const cheerio = require('cheerio');
 const fetch = require('node-fetch');
-const { hhmmToDate, nextToDate, calcDangerByDistM, minDiff, tsToDate } = require('../../utils/time/date');
+const { hhmmToDate, nextToDate, minDiff, tsToDate, addMin } = require('../../utils/time/date');
 
 const { db } = require("../../infrastructure/firestore/firestore");
 const { updateAllSchedules } = require("../train/train");
 const { getStops } = require('./route');
 const { baseUrl } = require('./const');
-const { getHash } = require('../../utils/hash');
+const { complementPath } = require('../path/update');
 
 const getPaths = async ([stop, dest]) => {
   const body = await (await fetch(`${baseUrl}/stop/${dest.from}?destination=${dest.to}`)).text();
@@ -20,11 +20,9 @@ const connectStation = async(res, dest) => {
   await updateAllSchedules();
   let station = (await db.collection('train').doc(dest.station).get()).data();
   let departures = station.departures.map(departure => tsToDate(departure));
-  let arrivalDate = res.mid.date;
+  let arrivalDate = addMin(res.mid.scheduledDate, res.delay);
   let departureDate =nextToDate(arrivalDate, departures);
-  let min = minDiff(departureDate, arrivalDate);
-  let danger = calcDangerByDistM(min, dest.distMStation);
-  return [{id:dest.station, name:station.name, date:departureDate, min, danger, refURL:station.refURL}, station.priority];
+  return [{id:dest.station, name:station.name, scheduledDate:departureDate, distM:dest.distMStation, refURL:station.refURL}, station.priority];
 }
 //#endregion
 
@@ -72,7 +70,7 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
   let valid = true;
   //find in head(status)
   const head = $(card).find('.head');
-  const fromDateRaw = hhmmToDate($(head).find('.time').text().trim());//planned_time
+  const fromDate = hhmmToDate($(head).find('.time').text().trim());//planned_time
   const status = statusToObj($(head).find('.status').text().trim());
   if(status.type === "Jam")valid = false;
   //find in btm
@@ -84,22 +82,13 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
   const route = {}
   route.route = $(btm).find('.route').text().trim();
   route.terminal = $(btm).find('.terminal').text().trim();
-    
-    
-  //now.setHours(Number(time.split(":")[0]), Number(time.split(":")[1]), 0);
   
-  let eta = new Date();
-  eta.setMinutes(eta.getMinutes()+status.min, 0, 0);
-  status.delay = (eta-fromDateRaw)/(60*1000);//min
-  let fromDate = new Date(fromDateRaw);
-  let min1 = minDiff(fromDate, new Date());
-  let danger1 = calcDangerByDistM(min1, stop.distMBase, false);
-  fromDate.setMinutes(fromDate.getMinutes()+Math.max(status.delay, 0), 0, 0);
+  let eta = addMin(new Date(), status.min);
+  let delay = Math.max(0, minDiff(eta, fromDate));
 
-  let from = {id:dest.from, name:stop.name, scheduledDate:fromDateRaw, date:fromDate, min:min1, danger:danger1}
+  let from = {id:dest.from, name:stop.name, scheduledDate:fromDate, distM:stop.distMBase,  route, num}
   
-  let hash = getHash(from.id+fromDateRaw);//
-  res = {type:"bus", from, route, num, valid, delay:Math.max(0, status.delay), hash, lastUpdate:new Date()};//status
+  res = {type:"bus", from, valid, delay};//status
 
   if(!valid)return res;
   //post-processing
@@ -107,35 +96,23 @@ const cardToObj = async ($, card, stop, dest, detail) => {//should exclude é«˜é€
   if(detail){
     let stopObjs = (await getStops(detailUrl)).stopObjs;
     let mid_ = stopObjs.find(stopObj => stopObj.name === dest.name);
-    let midDateRaw = mid_.time;
-    let midDate = new Date(midDateRaw);//delay already applied
-    let min2 = minDiff(midDateRaw, fromDateRaw);
-    let danger2 = 0;
-    if(status.delay > 5)danger2=1;
-    midDate.setMinutes(midDate.getMinutes()+res.delay, 0, 0);
-    res.mid = {id:dest.to, name:mid_.name, scheduledDate:midDateRaw , date:midDate, min:min2, danger:danger2, refURL:baseUrl+detailUrl};
-
+    res.mid = {id:dest.to, name:mid_.name, scheduledDate:mid_.time, refURL:baseUrl+detailUrl};
     [res.to, res.priority] = await connectStation(res, dest);
-    res.danger = Math.max(res.from.danger, res.mid.danger, res.to.danger);
   }
 
-  return res;
+  return await complementPath(res);
 }
+//#endregion
 
+//#region data update
 exports.updateInvalidPath = async (path) => {//update path data which is already departure (for delay)
   if(path.type === "bus" && path.valid === false){
     //
     console.log(path.from.name, tsToDate(path.from.date).toLocaleTimeString());
 
     let res = await getStops(path.mid.refURL.substring(16));
-    path.delay = res.delay;
-    let midDate = tsToDate(path.mid.scheduledDate);
-    midDate.setMinutes(midDate.getMinutes()+path.delay);
-    path.mid.date = midDate;
-    let toMin = minDiff(tsToDate(path.to.date), midDate);
-    path.to.min = toMin;
-    console.log(toMin);
-    console.log(path.delay);
+    path.delay = Math.max(0, res.delay);
+    path = complementPath(path);
   }
   return path;
 }

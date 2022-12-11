@@ -8,7 +8,9 @@ module.exports.calcDangerByDistM = (min, distM, isBus=true) => {
 }
 
 exports.addMin = (a, min) => {//to exact min 0 sec.ms..
-  return a.setMinutes(a.getMinutes()+min, 0, 0);
+  a = new Date(a);//so that dont' overwrite a
+  a.setMinutes(a.getMinutes()+min, 0, 0);
+  return a
 }
 
 module.exports.sameDay = (a, b) => {

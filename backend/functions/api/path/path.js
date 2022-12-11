@@ -1,9 +1,12 @@
 const { db } = require("../../infrastructure/firestore/firestore");
+const { getHash } = require("../../utils/hash");
+const { pad } = require("../../utils/misc");
 const { mergeOverriteA } = require("../../utils/path/merge");
-const { minDiff, tsToDate, addMin } = require("../../utils/time/date");
+const { minDiff, tsToDate, addMin, calcDangerByDistM } = require("../../utils/time/date");
 const bus = require("../bus/bus");
 const { updateInvalidPath } = require("../bus/path");
 const train = require("../train/train");
+const { tsToDateAll } = require("./update");
 
 exports.getAllPaths = async () => {
     let paths = await train.getAllPaths();
@@ -14,8 +17,8 @@ exports.getAllPaths = async () => {
 
 exports.updatePaths = async () => {
     //console.log(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0').get()).data().lastUpdate)));
-    if((await db.collection('paths').doc('0').get()).data() !== undefined){
-        if(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0').get()).data().lastUpdate)) < 1){console.log("ALREADY UPDATED");return;}
+    if((await db.collection('paths').doc('0000').get()).data() !== undefined){
+        if(minDiff(new Date(), tsToDate((await db.collection('paths').doc('0000').get()).data().lastUpdate)) < 1){console.log("ALREADY UPDATED");return;}
     }
     
     let paths = await train.getAllPaths();
@@ -23,12 +26,13 @@ exports.updatePaths = async () => {
     
     //should be deleted but should not be lost 
     let cache_paths = [];
-    (await db.collection('paths').get()).docs.map(async doc => {
+    //(await db.collection('paths').get()).docs.map(doc => doc.ref.delete())//doc is not deleted when delete collection
+    await Promise.all((await db.collection('paths').get()).docs.map(async doc => {
         let docd = doc.data();
         if(tsToDate(doc.data().from.date) < new Date())docd.valid = false;
-        if(tsToDate(doc.data().to.date) > new Date())cache_paths.push(docd)
-
-    })
+        if(tsToDate(doc.data().to.date) > new Date())cache_paths.push(tsToDateAll(docd))
+        await doc.ref.delete();
+    }))
     cache_paths = await Promise.all(cache_paths.map(async path => await updateInvalidPath(path)));
     paths = mergeOverriteA(cache_paths, paths);//merge a to b; prioritize b change
     //update path which is not included in paths;
@@ -37,8 +41,12 @@ exports.updatePaths = async () => {
 
     sortPaths(paths);
     await Promise.all(paths.map(async (path, i) => {//merge by hash however should change order.
-        db.collection('paths').doc(i+"").set(path);
+        //console.log(i);
+        //console.log(pad(i, 4));
+        //console.log(path);
+        db.collection('paths').doc(pad(i, 4)).set(path);
     }));
+    //console.log(paths);
     console.log("PATH UPDATED");
 
     return paths;
@@ -54,18 +62,3 @@ const sortPaths = (paths) => {
 }
 exports.sortPaths = sortPaths;
 
-const complementPath = (path) => {
-    if(path.type === "bus"){
-        path.danger = path.from.danger + path.mid.danger + path.to.danger
-        path.from.date = addMin(path.from.scheduledDate, path.delay);
-        path.mid.date = addMin(path.mid.scheduledDate, path.delay);
-        path.to.date = path.to.scheduledDate;
-        
-        path.from.min = minDiff(path.from.date, new Date());
-        path.mid.date = minDiff(path.mid.date, path.from.date);
-        path.to.date = minDiff(path.to.date, path.mid.date);
-        
-
-    }
-    
-}
