@@ -1,4 +1,5 @@
 # Bus-Train
+![Bus-Train](https://user-images.githubusercontent.com/38092328/207214718-c0aa0c43-8b78-4f89-937c-edac005a6fe9.png)
 Bus-Trainは、Bus itとJRの時刻表を利用した、バスの遅延をリアルタイム反映することができる乗り換えアプリです。
 
 - [動作デモ](#動作デモ)
