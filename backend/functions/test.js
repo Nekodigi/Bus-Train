@@ -9,9 +9,14 @@ const { getStops } = require('./api/bus/route');
 
 const f = async () => {//jjust deleted locally
   const paths = await updatePaths();
+<<<<<<< HEAD
   
   //console.log((await db.doc("paths/0").get()).data());
   //console.log(paths[0]);
+=======
+  //console.log((await db.doc("paths/0").get()).data());
+  //console.log(paths);
+>>>>>>> 30373fb (readme.updated)
   //const stops = await getStops("/trip/28_246048?seq=24#stay");
   //console.log(stops);
 
